@@ -1,0 +1,80 @@
+---
+title: "Ridge Regression and the Lasso"
+author: "Mats Hansson"
+date: "15 oktober 2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data
+We  using the Hitters data to set up a glm model, the data is in the packages `ISLR`.
+
+```{r}
+library(glmnet)
+library(ISLR)
+summary(Hitters)
+```
+
+
+There are some missing values here, so before we proceed we will remove them:
+```{r}
+Hitters=na.omit(Hitters)
+```
+
+
+### Model selection using a validation set
+Lets make a training and validation set, so that we can choose a good glm model.
+
+```{r}
+set.seed(1)
+train=sample(seq(263), 180, replace = FALSE)
+```
+
+
+
+We will use the packages `glmnet` which does not use the model formula language, so we will set up and `x` and `y`.
+```{r cars}
+x=model.matrix(Salary~.-1, data=Hitters)
+y=Hitters$Salary
+
+```
+
+First we will fit a ridge regression model. This achivied by calling `glmnet` with `alpha=0`. There is also `cv.glmnet`function which will do the cross-validation for us. 
+
+```{r,fit.width=5.5, fig.height=3.5}
+fit.ridge=glmnet(x,y, alpha = 0)
+plot(fit.ridge, xvar="lambda", label=TRUE)
+cv.ridge=cv.glmnet(x,y, alpha=0)
+plot(cv.ridge)
+```
+
+Now we fit a lasso model; for this we use the deafult `alpha=1`.
+```{r,fig.width=5.5, fig.height=3.5}
+fit.lasso=glmnet(x,y, alpha = 1)
+plot(fit.lasso, xvar="lambda", label=TRUE)
+
+### an alternativ way to plot the model
+### plot(fit.lasso, xvar="dev", label=TRUE)
+ 
+cv.lasso=cv.glmnet(x,y)
+plot(cv.lasso)
+coef(cv.lasso)
+```
+
+
+Suppose we want to use out earlier train/validation division to select the `lambda` for the lasso.
+
+```{r,fit.width=5.5, fig.height=3.5}
+lasso.tr=glmnet(x[train,], y[train], alpha = 1)
+pred=predict(lasso.tr, x[-train,])
+
+rmse=sqrt(apply((y[-train]-pred)^2, 2, mean ))
+plot(log(lasso.tr$lambda), rmse, type="b", xlab="Log(lambda)", col="blue", cex=0.5, pch=19)
+lam.best=lasso.tr$lambda[order(rmse)[1]]
+
+coef(lasso.tr, s=lam.best)
+```
+
