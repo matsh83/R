@@ -1,0 +1,73 @@
+---
+title: "ggvis and dplyr"
+author: "Mats Hansson"
+date: "18 september 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Both `dplyr` and `ggvis` packages is made by `Hadley Wickham` and these too packages can been working togeather.
+In these example we have a look when they work togeather.
+At the first line of code on the right: it uses the `group_by()` function from the `dplyr` package. Combined with ggvis commands, this leads to a plot with a separate smooth line for each unique value of the am variable (0 = automatic transmission; 1 = manual transmission). 
+
+```{r}
+library(ggvis)
+library(dplyr)
+```
+
+
+`group_by()` uses a grouping variable to organize a data set into several groups of observations. It places each observation into a group with other observations that have the same value of the grouping variable. In other words `group_by()` will create a separate group for each unique value of the grouping variable. When ggvis encounters grouped data, it will draw a separate mark for each group of observations.
+
+
+```{r}
+mtcars %>% 
+  group_by(cyl) %>%                              ### The group_by function is from ddplyr 
+  ggvis(~mpg, ~wt,                               ### Define the variable
+        stroke = ~factor(cyl)) %>%               ### Use the group_by function from above to use each group   
+  layer_smooths()                                ### Make a smooth line for each group
+```
+
+
+We can also use the `layer_densities()` to see the distribution for each group.
+```{r}
+mtcars %>% 
+  group_by(cyl) %>% 
+  ggvis(~mpg) %>% 
+  layer_densities(fill=~factor(cyl))
+```
+
+`group_by()` can group data based on the interaction of two or more variables.  However, to also correctly map ggvis properties to unique combinations of multiple variables, you need an additional step: the `interaction()` function. 
+```{r}
+mtcars %>% 
+  group_by(cyl, am) %>% 
+  ggvis(~mpg
+        , fill = ~interaction(cyl, am)) %>% 
+  layer_densities()
+
+```
+
+We can also add both a smooth line a dot in the same plot 
+```{r}
+mtcars %>%
+  group_by(am) %>%                        ### Define the group
+  ggvis(~mpg, ~hp) %>%                    ### Define the variables
+  layer_smooths(stroke = ~factor(am)) %>% ### Define the line  
+  layer_points(fill = ~factor(am))        ### Define the points
+```
+
+one more example
+```{r}
+mtcars %>%
+  group_by(cyl) %>%                        ### Define the group
+  ggvis(~mpg, ~wt) %>%                    ### Define the variables
+  layer_smooths(stroke = ~factor(cyl)) %>% ### Define the line  
+  layer_points(fill = ~factor(cyl))        ### Define the points
+```
+
+
+
+
+
+
