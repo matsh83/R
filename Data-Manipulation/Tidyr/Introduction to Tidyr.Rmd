@@ -1,0 +1,102 @@
+---
+title: "Tidyr"
+author: "Mats Hansson"
+date: "9 april 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction tidyr 
+Tidy data is data that's easy to work with: it's easy to munge (with dplyr), visualise (with ggplot2 or ggvis).
+The two most important properties of tidy data are:
+
+* Each column is a variable
+* Each row is an observation
+
+
+Tidyr provides three main functions for tidying your messy data: `gather()`, `separate()` and `spread()`.
+
+* `gather()` - takes multiple columns, and gathers them into key-value pairs: it makes "wide" data longer.
+* `separate()`- allows you to tease the variable apart, (`extract()` works similarly but uses regexp groups instead of a splitting pattern or position)
+* `spread()`, takes two columns (a key-value pair) and spreads them in to multiple columns, making "long" data wider. 
+
+
+Open data packages and create some data:
+```{r}
+# open the packages 
+suppressMessages(library(tidyr))
+suppressMessages(library(dplyr))
+
+# create data
+messy=data.frame(name=c("Wilbur", "Petunia", "Gregory"),
+                 a = c(67, 80, 64),
+                 b = c(56, 90, 50))
+
+print(messy)
+```
+
+In this experiment we've given three people two different drugs and recorded their heart rate.
+We have three variables (name, drug and heartrate), but only name is currently in a column. We use `gather()`
+First we specify the new column in the data.frame, than specify the column we want to merge.  
+
+```{r}
+# Gather the a and b columns into key-value pairs of drug and heartrate.
+messy %>%
+  gather(drug, heartrate, a:b)
+```
+
+Some other example to merge the data.
+```{r}
+d.f1=data.frame(trt = sample(rep(c('control', 'treatment'))),
+  work.T1 = runif(4),
+  work.T2 = runif(4),
+  work.T3 = runif(4))
+
+d.f1 %>%
+  gather(work, value, work.T1, work.T2)
+
+d.f1 %>%
+  gather(work, value, work.T1, work.T2,work.T3)
+
+d.f1 %>%
+  gather(work, value, work.T1:work.T3)
+```
+
+```{r}
+d.f=data.frame(id = 1:4,
+  trt = sample(rep(c('control', 'treatment'), each = 2)),
+  work.T1 = runif(4),
+  home.T1 = runif(4),
+  work.T2 = runif(4),
+  home.T2 = runif(4))
+```
+
+
+```{r}
+d.f %>%
+  gather(key, time, -id, -trt) 
+
+d.f %>%
+  gather(work, value,  work.T1, home.T1, work.T2, home.T2 )
+```
+
+
+
+```{r}
+tidier <- d.f %>%
+  gather(key, time, -id, -trt)
+d.f %>% head(8)
+
+```
+
+
+```{r}
+tidy <- tidier %>%
+  separate(key, into = c("location", "time"), sep = "\\.") 
+tidy %>% head(8)
+
+```
+
